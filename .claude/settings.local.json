@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(findstr \":4444\")",
+      "Bash(npm run *)",
+      "Bash(findstr \":5432\")",
+      "Bash(npx tsx *)",
+      "Bash(node -e ' *)",
+      "Bash(ls dist/)",
+      "Bash(node --require dotenv/config -e \"process.env.PORT='4444'\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Read(//tmp/**)",
+      "Bash(echo \"Server exited with: $?\")",
+      "Bash(taskkill /PID 6980 /F)",
+      "PowerShell(Stop-Process -Id 6980 -Force)"
+    ]
+  }
+}

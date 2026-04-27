@@ -1,0 +1,2 @@
+ALTER TABLE "Admin"
+DROP COLUMN "cpf";

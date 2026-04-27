@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminProfile {
+  SUPER_ADMIN
+  ADMIN
+  RECEPCAO
+  GESTOR
+}
+
+model Admin {
+  id                     String    @id @default(cuid())
+  name                   String
+  email                  String    @unique
+  password               String    @default("")
+  profile                AdminProfile @default(ADMIN)
+  passwordResetToken     String?
+  passwordResetExpiresAt DateTime?
+  createdAt              DateTime  @default(now())
+}
+
+model Patient {
+  id        String   @id @default(cuid())
+  name      String
+  cpf       String   @unique
+  whatsapp  String?
+  birthDate DateTime
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  exams     Exam[]
+}
+
+model Exam {
+  id        String   @id @default(cuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  examDate  DateTime
+  examType  String
+  fileKey   String
+  createdAt DateTime @default(now())
+
+  @@index([patientId])
+}
+
+model UserActionLog {
+  id        String   @id @default(cuid())
+  action    String
+  userId    String
+  userName  String
+  userRole  String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}

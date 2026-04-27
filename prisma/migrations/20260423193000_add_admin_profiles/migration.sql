@@ -1,0 +1,4 @@
+CREATE TYPE "AdminProfile" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'RECEPCAO', 'GESTOR');
+
+ALTER TABLE "Admin"
+ADD COLUMN "profile" "AdminProfile" NOT NULL DEFAULT 'ADMIN';

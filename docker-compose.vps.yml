@@ -1,0 +1,22 @@
+services:
+  db:
+    ports: []
+
+  api:
+    ports: []
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik}
+      traefik.http.routers.gestmed-backend.rule: Host(`${TRAEFIK_HOST}`)
+      traefik.http.routers.gestmed-backend.entrypoints: ${TRAEFIK_ENTRYPOINTS:-websecure}
+      traefik.http.routers.gestmed-backend.tls: "true"
+      traefik.http.routers.gestmed-backend.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.services.gestmed-backend.loadbalancer.server.port: "3333"
+    networks:
+      - default
+      - traefik
+
+networks:
+  traefik:
+    name: ${TRAEFIK_NETWORK:-traefik}
+    external: true
