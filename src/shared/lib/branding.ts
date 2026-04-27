@@ -18,15 +18,6 @@ const LOGO_FILES = {
 	},
 } as const
 
-function resolveExistingAssetPath(...filenames: string[]): string {
-	const fullPath = resolveOptionalAssetPath(...filenames)
-	if (fullPath) return fullPath
-
-	throw new Error(
-		`Asset nao encontrado: ${filenames.join(', ')}. Diretórios verificados: ${publicDirCandidates.join(', ')}`,
-	)
-}
-
 function resolveOptionalAssetPath(...filenames: string[]): string | null {
 	for (const publicDir of publicDirCandidates) {
 		for (const filename of filenames) {
@@ -40,8 +31,9 @@ function resolveOptionalAssetPath(...filenames: string[]): string | null {
 	return null
 }
 
-function readPublicAsset(...filenames: string[]): Buffer {
-	return fs.readFileSync(resolveExistingAssetPath(...filenames))
+function readOptionalPublicAsset(...filenames: string[]): Buffer | null {
+	const fullPath = resolveOptionalAssetPath(...filenames)
+	return fullPath ? fs.readFileSync(fullPath) : null
 }
 
 function getEmailAssetsBaseUrl(): string | null {
@@ -72,11 +64,11 @@ function getEmailAssetsBaseUrl(): string | null {
 
 export function getPdfLogos() {
 	return {
-		gestmed: readPublicAsset(
+		gestmed: readOptionalPublicAsset(
 			LOGO_FILES.gestmed.pdf.filename,
 			LOGO_FILES.gestmed.email.filename,
 		),
-		hamilton: readPublicAsset(
+		hamilton: readOptionalPublicAsset(
 			LOGO_FILES.hamilton.pdf.filename,
 			LOGO_FILES.hamilton.email.filename,
 		),
@@ -84,48 +76,47 @@ export function getPdfLogos() {
 }
 
 export function getOptionalPdfLogos() {
-	const gestmedPath = resolveOptionalAssetPath(
-		LOGO_FILES.gestmed.pdf.filename,
-		LOGO_FILES.gestmed.email.filename,
-	)
-	const hamiltonPath = resolveOptionalAssetPath(
-		LOGO_FILES.hamilton.pdf.filename,
-		LOGO_FILES.hamilton.email.filename,
-	)
-
-	return {
-		gestmed: gestmedPath ? fs.readFileSync(gestmedPath) : null,
-		hamilton: hamiltonPath ? fs.readFileSync(hamiltonPath) : null,
-	}
+	return getPdfLogos()
 }
 
 export function getEmailLogos() {
 	const baseUrl = getEmailAssetsBaseUrl()
+	const gestmedPath = resolveOptionalAssetPath(LOGO_FILES.gestmed.email.filename)
+	const hamiltonPath = resolveOptionalAssetPath(LOGO_FILES.hamilton.email.filename)
 
 	return {
-		gestmed: baseUrl
-			? `${baseUrl}/public-assets/${LOGO_FILES.gestmed.email.filename}`
-			: null,
-		hamilton: baseUrl
-			? `${baseUrl}/public-assets/${LOGO_FILES.hamilton.email.filename}`
-			: null,
+		gestmed:
+			baseUrl && gestmedPath
+				? `${baseUrl}/public-assets/${LOGO_FILES.gestmed.email.filename}`
+				: null,
+		hamilton:
+			baseUrl && hamiltonPath
+				? `${baseUrl}/public-assets/${LOGO_FILES.hamilton.email.filename}`
+				: null,
 	}
 }
 
 export function getEmailLogoAttachments() {
+	const gestmed = readOptionalPublicAsset(LOGO_FILES.gestmed.email.filename)
+	const hamilton = readOptionalPublicAsset(LOGO_FILES.hamilton.email.filename)
+
 	return {
-		gestmed: {
-			filename: LOGO_FILES.gestmed.email.filename,
-			contentType: LOGO_FILES.gestmed.email.mimeType,
-			content: readPublicAsset(LOGO_FILES.gestmed.email.filename).toString('base64'),
-			contentId: 'gestmed-logo',
-		},
-		hamilton: {
-			filename: LOGO_FILES.hamilton.email.filename,
-			contentType: LOGO_FILES.hamilton.email.mimeType,
-			content: readPublicAsset(LOGO_FILES.hamilton.email.filename).toString('base64'),
-			contentId: 'hamilton-logo',
-		},
+		gestmed: gestmed
+			? {
+					filename: LOGO_FILES.gestmed.email.filename,
+					contentType: LOGO_FILES.gestmed.email.mimeType,
+					content: gestmed.toString('base64'),
+					contentId: 'gestmed-logo',
+				}
+			: null,
+		hamilton: hamilton
+			? {
+					filename: LOGO_FILES.hamilton.email.filename,
+					contentType: LOGO_FILES.hamilton.email.mimeType,
+					content: hamilton.toString('base64'),
+					contentId: 'hamilton-logo',
+				}
+			: null,
 	}
 }
 
