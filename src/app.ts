@@ -79,6 +79,15 @@ export function buildApp() {
 	})
 	app.register(jwtPlugin)
 
+	app.get('/', async () => ({
+		status: 'ok',
+		service: 'gestmed-exams-backend',
+	}))
+
+	app.get('/health', async () => ({
+		status: 'ok',
+	}))
+
 	app.get('/public-assets/:filename', async (request, reply) => {
 		const { filename } = request.params as { filename: string }
 		const files = getPublicAssets()
