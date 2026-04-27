@@ -19,6 +19,15 @@ const LOGO_FILES = {
 } as const
 
 function resolveExistingAssetPath(...filenames: string[]): string {
+	const fullPath = resolveOptionalAssetPath(...filenames)
+	if (fullPath) return fullPath
+
+	throw new Error(
+		`Asset nao encontrado: ${filenames.join(', ')}. Diretórios verificados: ${publicDirCandidates.join(', ')}`,
+	)
+}
+
+function resolveOptionalAssetPath(...filenames: string[]): string | null {
 	for (const publicDir of publicDirCandidates) {
 		for (const filename of filenames) {
 			const fullPath = path.join(publicDir, filename)
@@ -28,17 +37,11 @@ function resolveExistingAssetPath(...filenames: string[]): string {
 		}
 	}
 
-	throw new Error(
-		`Asset nao encontrado: ${filenames.join(', ')}. Diretórios verificados: ${publicDirCandidates.join(', ')}`,
-	)
+	return null
 }
 
 function readPublicAsset(...filenames: string[]): Buffer {
 	return fs.readFileSync(resolveExistingAssetPath(...filenames))
-}
-
-function getPublicAssetPath(...filenames: string[]): string {
-	return resolveExistingAssetPath(...filenames)
 }
 
 function getEmailAssetsBaseUrl(): string | null {
@@ -80,6 +83,22 @@ export function getPdfLogos() {
 	}
 }
 
+export function getOptionalPdfLogos() {
+	const gestmedPath = resolveOptionalAssetPath(
+		LOGO_FILES.gestmed.pdf.filename,
+		LOGO_FILES.gestmed.email.filename,
+	)
+	const hamiltonPath = resolveOptionalAssetPath(
+		LOGO_FILES.hamilton.pdf.filename,
+		LOGO_FILES.hamilton.email.filename,
+	)
+
+	return {
+		gestmed: gestmedPath ? fs.readFileSync(gestmedPath) : null,
+		hamilton: hamiltonPath ? fs.readFileSync(hamiltonPath) : null,
+	}
+}
+
 export function getEmailLogos() {
 	const baseUrl = getEmailAssetsBaseUrl()
 
@@ -111,32 +130,55 @@ export function getEmailLogoAttachments() {
 }
 
 export function getPublicAssets() {
-	return {
-		'logo.png': {
-			path: getPublicAssetPath(
-				LOGO_FILES.gestmed.pdf.filename,
-				LOGO_FILES.gestmed.email.filename,
-			),
-			contentType: LOGO_FILES.gestmed.pdf.mimeType,
-		},
-		'logo_ham.png': {
-			path: getPublicAssetPath(
-				LOGO_FILES.hamilton.pdf.filename,
-				LOGO_FILES.hamilton.email.filename,
-			),
-			contentType: LOGO_FILES.hamilton.pdf.mimeType,
-		},
-		'logo_email.png': {
-			path: getPublicAssetPath(LOGO_FILES.gestmed.email.filename),
-			contentType: LOGO_FILES.gestmed.email.mimeType,
-		},
-		'logo_ham_email.png': {
-			path: getPublicAssetPath(LOGO_FILES.hamilton.email.filename),
-			contentType: LOGO_FILES.hamilton.email.mimeType,
-		},
-		'logo_ham.webp': {
-			path: getPublicAssetPath(LOGO_FILES.hamilton.web.filename),
-			contentType: LOGO_FILES.hamilton.web.mimeType,
-		},
-	} as const
+	const assets: Record<string, { path: string; contentType: string }> = {}
+
+	addPublicAsset(
+		assets,
+		'logo.png',
+		LOGO_FILES.gestmed.pdf.mimeType,
+		LOGO_FILES.gestmed.pdf.filename,
+		LOGO_FILES.gestmed.email.filename,
+	)
+	addPublicAsset(
+		assets,
+		'logo_ham.png',
+		LOGO_FILES.hamilton.pdf.mimeType,
+		LOGO_FILES.hamilton.pdf.filename,
+		LOGO_FILES.hamilton.email.filename,
+	)
+	addPublicAsset(
+		assets,
+		'logo_email.png',
+		LOGO_FILES.gestmed.email.mimeType,
+		LOGO_FILES.gestmed.email.filename,
+	)
+	addPublicAsset(
+		assets,
+		'logo_ham_email.png',
+		LOGO_FILES.hamilton.email.mimeType,
+		LOGO_FILES.hamilton.email.filename,
+	)
+	addPublicAsset(
+		assets,
+		'logo_ham.webp',
+		LOGO_FILES.hamilton.web.mimeType,
+		LOGO_FILES.hamilton.web.filename,
+	)
+
+	return assets
+}
+
+function addPublicAsset(
+	assets: Record<string, { path: string; contentType: string }>,
+	publicFilename: string,
+	contentType: string,
+	...sourceFilenames: string[]
+) {
+	const assetPath = resolveOptionalAssetPath(...sourceFilenames)
+	if (!assetPath) return
+
+	assets[publicFilename] = {
+		path: assetPath,
+		contentType,
+	}
 }

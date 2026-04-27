@@ -1,5 +1,5 @@
 import PDFDocument from 'pdfkit'
-import { getPdfLogos } from './branding'
+import { getOptionalPdfLogos } from './branding'
 
 interface PatientCredentials {
 	name: string
@@ -13,7 +13,7 @@ export function generateCredentialsPDF(
 ): Promise<Buffer> {
 	return new Promise((resolve, reject) => {
 		const doc = new PDFDocument({ size: 'A4', margin: 60 })
-		const logos = getPdfLogos()
+		const logos = getOptionalPdfLogos()
 		const accessUrl = normalizeAccessUrl(data.accessUrl)
 		const chunks: Buffer[] = []
 
@@ -25,22 +25,46 @@ export function generateCredentialsPDF(
 		const logoWidth = 60
 		const plusWidth = 18
 		const gap = 22
-		const totalWidth = logoWidth * 2 + plusWidth + gap * 2
-		const startX = (doc.page.width - totalWidth) / 2
+		const availableLogos: NonNullable<typeof logos.gestmed>[] = []
+		if (logos.gestmed) availableLogos.push(logos.gestmed)
+		if (logos.hamilton) availableLogos.push(logos.hamilton)
 
-		doc.image(logos.gestmed, startX, topY, { width: logoWidth })
-		doc
-			.fontSize(18)
-			.font('Helvetica-Bold')
-			.fillColor('#A87A3C')
-			.text('+', startX + logoWidth + gap, topY + 18, {
-				width: plusWidth,
-				align: 'center',
-				lineBreak: false,
+		if (availableLogos.length === 2) {
+			const totalWidth = logoWidth * 2 + plusWidth + gap * 2
+			const startX = (doc.page.width - totalWidth) / 2
+
+			doc.image(availableLogos[0], startX, topY, { width: logoWidth })
+			doc
+				.fontSize(18)
+				.font('Helvetica-Bold')
+				.fillColor('#A87A3C')
+				.text('+', startX + logoWidth + gap, topY + 18, {
+					width: plusWidth,
+					align: 'center',
+					lineBreak: false,
+				})
+			doc.image(
+				availableLogos[1],
+				startX + logoWidth + plusWidth + gap * 2,
+				topY,
+				{
+					width: logoWidth,
+				},
+			)
+		} else if (availableLogos.length === 1) {
+			doc.image(availableLogos[0], (doc.page.width - logoWidth) / 2, topY, {
+				width: logoWidth,
 			})
-		doc.image(logos.hamilton, startX + logoWidth + plusWidth + gap * 2, topY, {
-			width: logoWidth,
-		})
+		} else {
+			doc
+				.fontSize(18)
+				.font('Helvetica-Bold')
+				.fillColor('#A87A3C')
+				.text('GestMed + Hamilton', {
+					align: 'center',
+					width: doc.page.width - doc.page.margins.left - doc.page.margins.right,
+				})
+		}
 
 		doc.x = doc.page.margins.left
 		doc.y = topY + 100
