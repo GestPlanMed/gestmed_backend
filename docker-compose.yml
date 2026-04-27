@@ -36,7 +36,7 @@ services:
       PATIENT_ACCESS_URL: ${PATIENT_ACCESS_URL}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
     ports:
-      - "${API_BIND_ADDRESS:-0.0.0.0}:${PORT:-3333}:3333"
+      - "${API_BIND_ADDRESS:-0.0.0.0}:${PORT:-3333}:${PORT:-3333}"
     restart: unless-stopped
 
 volumes:

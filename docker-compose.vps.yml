@@ -11,7 +11,7 @@ services:
       traefik.http.routers.gestmed-backend.entrypoints: ${TRAEFIK_ENTRYPOINTS:-websecure}
       traefik.http.routers.gestmed-backend.tls: "true"
       traefik.http.routers.gestmed-backend.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
-      traefik.http.services.gestmed-backend.loadbalancer.server.port: "3333"
+      traefik.http.services.gestmed-backend.loadbalancer.server.port: "${PORT:-3333}"
     networks:
       - default
       - traefik
