@@ -3,6 +3,7 @@ import { getEmailLogos } from './branding'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const emailLogos = getEmailLogos()
+const defaultFromName = 'Amparo Exames'
 
 type EmailTemplateParams = {
 	title: string
@@ -19,6 +20,20 @@ function escapeHtml(value: string): string {
 		.replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#39;')
+}
+
+function getResendFrom(): string {
+	const from = process.env.RESEND_FROM_EMAIL?.trim()
+
+	if (!from) {
+		throw new Error('RESEND_FROM_EMAIL is not configured')
+	}
+
+	if (from.includes('@')) {
+		return from
+	}
+
+	return `${defaultFromName} <noreply@${from}>`
 }
 
 function buildEmailTemplate({
@@ -98,7 +113,7 @@ export async function sendMagicLink(
 	link: string,
 ): Promise<void> {
 	await resend.emails.send({
-		from: process.env.RESEND_FROM_EMAIL!,
+		from: getResendFrom(),
 		to: email,
 		subject: 'Seu link de acesso - GestMed Exames',
 		html: buildEmailTemplate({
@@ -123,7 +138,7 @@ export async function sendAdminPasswordResetEmail(
 	link: string,
 ): Promise<void> {
 	await resend.emails.send({
-		from: process.env.RESEND_FROM_EMAIL!,
+		from: getResendFrom(),
 		to: email,
 		subject: 'Recuperação de senha - GestMed Exames',
 		html: buildEmailTemplate({
@@ -149,7 +164,7 @@ export async function sendAdminWelcomeEmail(
 	password: string,
 ): Promise<void> {
 	await resend.emails.send({
-		from: process.env.RESEND_FROM_EMAIL!,
+		from: getResendFrom(),
 		to: email,
 		subject: 'Seu acesso administrativo - GestMed Exames',
 		html: buildEmailTemplate({
