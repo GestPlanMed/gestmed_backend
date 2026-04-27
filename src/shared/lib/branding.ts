@@ -1,7 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 
-const publicDir = path.resolve(process.cwd(), 'public')
+const publicDirCandidates = [
+	path.resolve(process.cwd(), 'public'),
+	path.resolve(__dirname, '../../../public'),
+	path.resolve(__dirname, '../../../../public'),
+]
 const LOGO_FILES = {
 	gestmed: {
 		pdf: { filename: 'logo.png', mimeType: 'image/png' },
@@ -15,14 +19,18 @@ const LOGO_FILES = {
 } as const
 
 function resolveExistingAssetPath(...filenames: string[]): string {
-	for (const filename of filenames) {
-		const fullPath = path.join(publicDir, filename)
-		if (fs.existsSync(fullPath)) {
-			return fullPath
+	for (const publicDir of publicDirCandidates) {
+		for (const filename of filenames) {
+			const fullPath = path.join(publicDir, filename)
+			if (fs.existsSync(fullPath)) {
+				return fullPath
+			}
 		}
 	}
 
-	throw new Error(`Asset nao encontrado: ${filenames.join(', ')}`)
+	throw new Error(
+		`Asset nao encontrado: ${filenames.join(', ')}. Diretórios verificados: ${publicDirCandidates.join(', ')}`,
+	)
 }
 
 function readPublicAsset(...filenames: string[]): Buffer {
