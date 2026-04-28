@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit'
 import { getOptionalPdfLogos } from './branding'
+import { buildPatientCredentialsMessage } from './whatsapp'
 
 interface PatientCredentials {
 	name: string
@@ -125,6 +126,13 @@ export function generateCredentialsPDF(
 			})
 
 		doc.end()
+	})
+}
+
+export function generateCredentialsText(data: PatientCredentials): string {
+	return buildPatientCredentialsMessage({
+		...data,
+		accessUrl: normalizeAccessUrl(data.accessUrl),
 	})
 }
 

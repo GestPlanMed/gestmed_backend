@@ -4,35 +4,108 @@ import * as service from './exam.service'
 import { AppError } from '../../shared/errors/app-error'
 import { logUserAction } from '../user-action-logs/user-action-log.service'
 
+const EXAM_FILE_TYPES = {
+	pdf: {
+		extension: 'pdf',
+		contentType: 'application/pdf',
+		mimeTypes: new Set(['application/pdf']),
+	},
+	dcm: {
+		extension: 'dcm',
+		contentType: 'application/dicom',
+		mimeTypes: new Set([
+			'application/dicom',
+			'application/octet-stream',
+			'binary/octet-stream',
+		]),
+	},
+} as const
+
+type ExamFileType = keyof typeof EXAM_FILE_TYPES
+
+type ParsedExamFile = {
+	buffer: Buffer
+	type: ExamFileType
+}
+
+function hasDicomPreamble(buffer: Buffer) {
+	return buffer.length >= 132 && buffer.subarray(128, 132).toString() === 'DICM'
+}
+
+function detectExamFileType(file: {
+	buffer: Buffer
+	filename?: string
+	mimetype?: string
+}): ExamFileType | null {
+	const extension = file.filename?.split('.').pop()?.toLowerCase()
+
+	if (
+		extension === 'pdf' &&
+		EXAM_FILE_TYPES.pdf.mimeTypes.has(file.mimetype ?? '')
+	) {
+		return 'pdf'
+	}
+
+	if (
+		extension === 'dcm' &&
+		(EXAM_FILE_TYPES.dcm.mimeTypes.has(file.mimetype ?? '') ||
+			hasDicomPreamble(file.buffer))
+	) {
+		return 'dcm'
+	}
+
+	return null
+}
+
 export async function uploadExamController(
 	request: FastifyRequest,
 	reply: FastifyReply,
 ) {
 	const fields: Record<string, string> = {}
-	let fileBuffer: Buffer | null = null
+	const files: ParsedExamFile[] = []
 
 	for await (const part of request.parts()) {
 		if (part.type === 'file') {
-			if (part.mimetype !== 'application/pdf') {
-				throw new AppError('Apenas arquivos PDF são aceitos')
+			const buffer = await part.toBuffer()
+			const detectedType = detectExamFileType({
+				buffer,
+				filename: part.filename,
+				mimetype: part.mimetype,
+			})
+
+			if (!detectedType) {
+				throw new AppError('Apenas arquivos PDF ou DCM sao aceitos')
 			}
-			fileBuffer = await part.toBuffer()
+
+			files.push({
+				buffer,
+				type: detectedType,
+			})
 		} else {
 			fields[part.fieldname] = part.value as string
 		}
 	}
 
-	if (!fileBuffer) throw new AppError('Arquivo PDF obrigatório')
+	if (files.length === 0) {
+		throw new AppError('Ao menos um arquivo PDF ou DCM e obrigatorio')
+	}
 
 	const data = createExamSchema.parse(fields)
-	const exam = await service.uploadExam(data, fileBuffer)
+	const exams = await service.uploadExams(
+		data,
+		files.map((file) => ({
+			buffer: file.buffer,
+			extension: EXAM_FILE_TYPES[file.type].extension,
+			contentType: EXAM_FILE_TYPES[file.type].contentType,
+		})),
+	)
 	await logUserAction({
 		request,
 		action: 'upload_exam',
-		payload: data,
+		payload: { ...data, fileCount: files.length },
 	})
 
-	return reply.status(201).send(exam)
+	return reply.status(201).send(exams)
 }
 
 export async function listExamsController(

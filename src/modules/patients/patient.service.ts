@@ -2,8 +2,10 @@ import { randomBytes } from 'crypto'
 import { Prisma } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { AppError } from '../../shared/errors/app-error'
-import { generateCredentialsPDF } from '../../shared/lib/pdf'
+import { getPatientAccessUrl } from '../../shared/lib/patient-access'
+import { generateCredentialsPDF, generateCredentialsText } from '../../shared/lib/pdf'
 import { prisma } from '../../shared/lib/prisma'
+import { sendPatientCredentialsWhatsApp } from '../../shared/lib/whatsapp'
 import type { CreatePatientInput, UpdatePatientInput } from './patient.schema'
 
 // Caracteres sem ambiguidade visual (sem 0/O, 1/I) para facilitar leitura.
@@ -19,6 +21,7 @@ async function generatePatientCredentialsPDF(patient: {
 	id: string
 	name: string
 	cpf: string
+	whatsapp?: string | null
 }): Promise<Buffer> {
 	const rawPassword = generatePassword()
 	const hashedPassword = await bcrypt.hash(rawPassword, 10)
@@ -28,12 +31,18 @@ async function generatePatientCredentialsPDF(patient: {
 		data: { password: hashedPassword },
 	})
 
-	return generateCredentialsPDF({
+	const credentials = {
 		name: patient.name,
 		cpf: patient.cpf,
 		password: rawPassword,
-		accessUrl: process.env.PATIENT_ACCESS_URL!,
-	})
+		accessUrl: getPatientAccessUrl(),
+	}
+
+	const pdfBuffer = await generateCredentialsPDF(credentials)
+	// WhatsApp em standby: reativar quando a Evolution API estiver pronta.
+	// await notifyPatientCredentials(patient.whatsapp, generateCredentialsText(credentials))
+
+	return pdfBuffer
 }
 
 export function buildPatientCredentialsFilename(name: string, date = new Date()): string {
@@ -49,12 +58,13 @@ export async function createPatient(data: CreatePatientInput): Promise<Buffer> {
 
 	const rawPassword = generatePassword()
 	const hashedPassword = await bcrypt.hash(rawPassword, 10)
-	const pdfBuffer = await generateCredentialsPDF({
+	const credentials = {
 		name: data.name,
 		cpf: data.cpf,
 		password: rawPassword,
-		accessUrl: process.env.PATIENT_ACCESS_URL!,
-	})
+		accessUrl: getPatientAccessUrl(),
+	}
+	const pdfBuffer = await generateCredentialsPDF(credentials)
 
 	try {
 		await prisma.patient.create({
@@ -77,6 +87,9 @@ export async function createPatient(data: CreatePatientInput): Promise<Buffer> {
 		throw error
 	}
 
+	// WhatsApp em standby: reativar quando a Evolution API estiver pronta.
+	// await notifyPatientCredentials(data.whatsapp, generateCredentialsText(credentials))
+
 	return pdfBuffer
 }
 
@@ -87,6 +100,7 @@ export async function regeneratePatientCredentials(id: string): Promise<Buffer> 
 			id: true,
 			name: true,
 			cpf: true,
+			whatsapp: true,
 		},
 	})
 
@@ -175,4 +189,15 @@ function formatFilenameDate(date: Date): string {
 	const day = String(date.getDate()).padStart(2, '0')
 
 	return `${year}${month}${day}`
+}
+
+async function notifyPatientCredentials(
+	whatsapp: string | null | undefined,
+	message: string,
+): Promise<void> {
+	try {
+		await sendPatientCredentialsWhatsApp({ whatsapp, message })
+	} catch (error) {
+		console.error('Erro ao enviar credenciais por WhatsApp', error)
+	}
 }

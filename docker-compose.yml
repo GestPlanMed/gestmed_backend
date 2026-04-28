@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gestmed}
       POSTGRES_DB: ${POSTGRES_DB:-gestmed_exams}
     ports:
-      - "${DB_BIND_ADDRESS:-0.0.0.0}:5432:5432"
+      - "${DB_BIND_ADDRESS:-0.0.0.0}:${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

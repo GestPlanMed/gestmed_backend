@@ -67,7 +67,7 @@ export function buildApp() {
 		credentials: true,
 	})
 	app.register(multipart, {
-		limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+		limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
 	})
 	app.register(rateLimit, {
 		global: true,
