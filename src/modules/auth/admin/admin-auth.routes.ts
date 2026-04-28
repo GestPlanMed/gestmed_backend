@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { requireAdmin } from '../../../shared/hooks/authenticate'
 import {
+	changeAdminPasswordController,
 	forgotAdminPasswordController,
 	getAdminMeController,
 	loginAdminController,
@@ -33,4 +34,10 @@ export async function adminAuthRoutes(app: FastifyInstance) {
 	)
 
 	app.get('/me', { onRequest: [requireAdmin] }, getAdminMeController)
+
+	app.patch(
+		'/change-password',
+		{ onRequest: [requireAdmin] },
+		changeAdminPasswordController,
+	)
 }

@@ -10,7 +10,8 @@ type EmailTemplateParams = {
 	intro: string
 	buttonLabel?: string
 	buttonUrl?: string
-	helperText: string
+	helperText?: string
+	helperHtml?: string
 }
 
 function escapeHtml(value: string): string {
@@ -42,24 +43,25 @@ function buildEmailTemplate({
 	buttonLabel,
 	buttonUrl,
 	helperText,
+	helperHtml,
 }: EmailTemplateParams): string {
 	const safeTitle = escapeHtml(title)
 	const safeIntro = escapeHtml(intro)
 	const safeButtonLabel = buttonLabel ? escapeHtml(buttonLabel) : null
 	const safeButtonUrl = buttonUrl ? escapeHtml(buttonUrl) : null
-	const safeHelperText = escapeHtml(helperText)
+	const helperMarkup = helperHtml ?? escapeHtml(helperText ?? '')
 	const logoMarkup = emailLogos.gestmed
 		? `
           <img
             src="${escapeHtml(emailLogos.gestmed)}"
-            alt="GestMed Exames"
-            width="156"
-            style="display:block;width:156px;max-width:100%;height:auto;margin:0 auto 24px"
+            alt="Amparo Exames"
+            width="136"
+            style="display:block;width:136px;max-width:100%;height:auto;margin:0"
           />
         `
 		: `
-          <div style="text-align:center;font-size:24px;font-weight:800;letter-spacing:0.04em;color:#0f172a;margin-bottom:24px">
-            GestMed Exames
+          <div style="font-size:22px;font-weight:700;letter-spacing:0;color:#111827">
+            Amparo Exames
           </div>
         `
 
@@ -69,7 +71,7 @@ function buildEmailTemplate({
               <div style="margin:0 0 24px">
                 <a
                   href="${safeButtonUrl}"
-                  style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:14px 24px;border-radius:12px;text-decoration:none;font-size:16px;font-weight:700"
+                  style="display:inline-block;background:#1f2937;color:#ffffff;padding:12px 18px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700"
                 >
                   ${safeButtonLabel}
                 </a>
@@ -78,29 +80,31 @@ function buildEmailTemplate({
 			: ''
 
 	return `
-      <div style="margin:0;padding:32px 16px;background:#f3f7fb;font-family:Arial,sans-serif;color:#0f172a">
+      <div style="margin:0;padding:40px 16px;background:#f4f6f8;font-family:Arial,sans-serif;color:#111827">
         <div style="max-width:560px;margin:0 auto">
-          <div style="background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);border-radius:24px;padding:32px 28px 20px">
-            ${logoMarkup}
-            <div style="background:#ffffff;border-radius:20px;padding:32px 28px;box-shadow:0 18px 50px rgba(15,23,42,0.14)">
-              <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase">
+          <div style="background:#ffffff;border:1px solid #d9dee5;border-radius:16px;overflow:hidden">
+            <div style="padding:28px 30px 22px;border-bottom:1px solid #e5e7eb">
+              ${logoMarkup}
+            </div>
+            <div style="padding:30px">
+              <div style="display:inline-block;margin:0 0 16px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:999px;color:#475569;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">
                 Acesso seguro
               </div>
-              <h1 style="margin:18px 0 12px;font-size:28px;line-height:1.2;color:#0f172a">
+              <h1 style="margin:0 0 12px;font-size:26px;line-height:1.24;color:#111827;font-weight:800">
                 ${safeTitle}
               </h1>
-              <p style="margin:0 0 24px;font-size:16px;line-height:1.7;color:#334155">
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.65;color:#374151">
                 ${safeIntro}
               </p>
               ${buttonMarkup}
-              <div style="padding:16px 18px;border:1px solid #dbeafe;border-radius:14px;background:#f8fbff">
-                <p style="margin:0;font-size:14px;line-height:1.7;color:#475569">
-                  ${safeHelperText}
+              <div style="padding:18px 20px;border:1px solid #d9dee5;border-radius:10px;background:#f9fafb">
+                <p style="margin:0;font-size:14px;line-height:1.75;color:#374151">
+                  ${helperMarkup}
                 </p>
               </div>
             </div>
           </div>
-          <p style="margin:18px auto 0;max-width:520px;text-align:center;font-size:12px;line-height:1.6;color:#64748b">
+          <p style="margin:16px auto 0;max-width:500px;text-align:center;font-size:12px;line-height:1.6;color:#64748b">
             Se você não reconhece esta solicitação, ignore este e-mail. Para sua segurança, este link expira em <strong>15 minutos</strong>.
           </p>
         </div>
@@ -115,7 +119,7 @@ export async function sendMagicLink(
 	await resend.emails.send({
 		from: getResendFrom(),
 		to: email,
-		subject: 'Seu link de acesso - GestMed Exames',
+		subject: 'Seu link de acesso - Amparo Exames',
 		html: buildEmailTemplate({
 			title: 'Acesse o painel administrativo',
 			intro:
@@ -140,7 +144,7 @@ export async function sendAdminPasswordResetEmail(
 	await resend.emails.send({
 		from: getResendFrom(),
 		to: email,
-		subject: 'Recuperação de senha - GestMed Exames',
+		subject: 'Recuperação de senha - Amparo Exames',
 		html: buildEmailTemplate({
 			title: 'Redefina sua senha',
 			intro:
@@ -163,22 +167,26 @@ export async function sendAdminWelcomeEmail(
 	name: string,
 	password: string,
 ): Promise<void> {
+	const safeEmail = escapeHtml(email)
+	const safePassword = escapeHtml(password)
+
 	await resend.emails.send({
 		from: getResendFrom(),
 		to: email,
-		subject: 'Seu acesso administrativo - GestMed Exames',
+		subject: 'Seu acesso administrativo - Amparo Exames',
 		html: buildEmailTemplate({
 			title: 'Sua conta administrativa foi criada',
-			intro: `Ola, ${name}. Seu acesso ao painel administrativo foi liberado.`,
-			helperText:
-				`Use o e-mail ${email} e a senha provisoria ${password} para entrar. ` +
-				'Por seguranca, recomendamos alterar essa senha no primeiro acesso.',
+			intro: `Olá, ${name}. Seu acesso ao painel administrativo foi liberado.`,
+			helperHtml:
+				`Use o e-mail <a href="mailto:${safeEmail}" style="color:#1f2937;font-weight:700">${safeEmail}</a> ` +
+				`e a senha provisória <strong style="color:#111827">${safePassword}</strong> para entrar. ` +
+				'Por segurança, recomendamos alterar essa senha no primeiro acesso.',
 		}),
 		text:
-			`Ola, ${name}.\n\n` +
+			`Olá, ${name}.\n\n` +
 			'Sua conta administrativa foi criada.\n' +
 			`E-mail: ${email}\n` +
-			`Senha provisoria: ${password}\n\n` +
+			`Senha provisória: ${password}\n\n` +
 			'Recomendamos alterar essa senha no primeiro acesso.',
 	})
 }

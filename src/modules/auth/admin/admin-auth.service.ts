@@ -110,3 +110,30 @@ export async function resetAdminPassword(
 		},
 	})
 }
+
+export async function changeAdminPassword(
+	adminId: string,
+	currentPassword: string,
+	password: string,
+): Promise<void> {
+	const admin = await prisma.admin.findUnique({ where: { id: adminId } })
+	if (!admin) {
+		throw new AppError('Administrador nao encontrado', 404)
+	}
+
+	const passwordMatch = await bcrypt.compare(currentPassword, admin.password)
+	if (!passwordMatch) {
+		throw new AppError('Senha atual incorreta', 400)
+	}
+
+	const passwordHash = await bcrypt.hash(password, 10)
+
+	await prisma.admin.update({
+		where: { id: admin.id },
+		data: {
+			password: passwordHash,
+			passwordResetToken: null,
+			passwordResetExpiresAt: null,
+		},
+	})
+}

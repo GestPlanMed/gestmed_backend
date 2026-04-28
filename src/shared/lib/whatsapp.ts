@@ -67,9 +67,9 @@ export function buildNewExamMessage({
 	const verb = examCount > 1 ? 'foram disponibilizados' : 'foi disponibilizado'
 
 	return [
-		`Ola, ${name}.`,
+		`Olá, ${name}.`,
 		'',
-		`${examCount} ${examLabel} ${verb} para voce no GestMed Exames.`,
+		`${examCount} ${examLabel} ${verb} para você no Amparo Exames.`,
 		`Tipo: ${examType}`,
 		'',
 		`Acesse: ${normalizeAccessUrl(accessUrl)}`,

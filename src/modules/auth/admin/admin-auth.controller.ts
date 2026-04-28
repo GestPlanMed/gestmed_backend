@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import {
+	adminChangePasswordSchema,
 	adminForgotPasswordSchema,
 	adminLoginSchema,
 	adminResetPasswordSchema,
@@ -55,4 +56,20 @@ export async function resetAdminPasswordController(
 	await service.resetAdminPassword(token, password)
 
 	return reply.status(200).send({ message: 'Senha redefinida com sucesso' })
+}
+
+export async function changeAdminPasswordController(
+	request: FastifyRequest,
+	reply: FastifyReply,
+) {
+	const { currentPassword, password } = adminChangePasswordSchema.parse(
+		request.body,
+	)
+	await service.changeAdminPassword(request.user.sub, currentPassword, password)
+	await logUserAction({
+		request,
+		action: 'change_admin_password',
+	})
+
+	return reply.status(200).send({ message: 'Senha alterada com sucesso' })
 }
