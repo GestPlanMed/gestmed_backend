@@ -19,6 +19,9 @@ docker_compose() {
   docker compose "${COMPOSE_ARGS[@]}" "$@"
 }
 
+echo "==> Atualizando código do repositório..."
+git pull
+
 echo "==> Parando containers anteriores..."
 docker_compose down
 
