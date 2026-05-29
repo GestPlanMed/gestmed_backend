@@ -3,7 +3,9 @@ set -e
 
 # Carrega variáveis de ambiente do .env se existir
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  set -a
+  source .env
+  set +a
 fi
 
 COMPOSE_ARGS=(-f docker-compose.yml)
