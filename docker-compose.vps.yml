@@ -3,7 +3,7 @@ services:
     ports: []
     labels:
       traefik.enable: "true"
-      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik}
+      traefik.docker.network: ${TRAEFIK_NETWORK:-web}
       traefik.http.routers.gestmed-backend.rule: Host(`${TRAEFIK_HOST}`)
       traefik.http.routers.gestmed-backend.entrypoints: ${TRAEFIK_ENTRYPOINTS:-websecure}
       traefik.http.routers.gestmed-backend.tls: "true"
@@ -15,5 +15,5 @@ services:
 
 networks:
   traefik:
-    name: ${TRAEFIK_NETWORK:-traefik}
+    name: ${TRAEFIK_NETWORK:-web}
     external: true
