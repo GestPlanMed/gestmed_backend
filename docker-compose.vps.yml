@@ -1,7 +1,4 @@
 services:
-  db:
-    ports: []
-
   api:
     ports: []
     labels:
