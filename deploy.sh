@@ -34,11 +34,14 @@ docker builder prune -f
 echo "==> Fazendo build da imagem..."
 docker_compose build --no-cache
 
+echo "==> Subindo o banco de dados..."
+docker_compose up -d postgres --wait
+
 echo "==> Rodando migrations..."
 docker_compose run --rm api sh -c "npx prisma migrate deploy"
 
-echo "==> Subindo a API..."
-docker_compose up -d api
+echo "==> Subindo os serviços..."
+docker_compose up -d
 
 echo "==> Logs da API (Ctrl+C para sair):"
 docker_compose logs -f api
