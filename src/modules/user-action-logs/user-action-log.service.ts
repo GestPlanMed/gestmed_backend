@@ -115,6 +115,11 @@ function buildUserActionLogPresentation(
 				resource: 'patient',
 				detail: stringifyDetail(payloadRecord?.patientId),
 			}
+		case 'delete_patient':
+			return {
+				resource: 'patient',
+				detail: stringifyDetail(payloadRecord?.patientId),
+			}
 		case 'regenerate_patient_credentials':
 			return {
 				resource: 'patient_credentials',

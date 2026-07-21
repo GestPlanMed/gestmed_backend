@@ -10,6 +10,7 @@ import {
 	listExamsController,
 	listMyExamsController,
 	downloadExamController,
+	downloadExamItemController,
 	deleteExamController,
 } from './exam.controller'
 
@@ -24,7 +25,12 @@ export async function examRoutes(app: FastifyInstance) {
 
 	app.get('/my', { onRequest: [requirePatient] }, listMyExamsController)
 
-	// Admin e paciente podem baixar — o service valida que paciente só acessa seu próprio exame
+	app.get<{ Params: { examId: string; itemId: string } }>(
+		'/:examId/items/:itemId/download',
+		{ onRequest: [authenticate, requireAdminScreenIfAdmin('exams')] },
+		downloadExamItemController,
+	)
+
 	app.get<{ Params: { id: string } }>(
 		'/:id/download',
 		{ onRequest: [authenticate, requireAdminScreenIfAdmin('exams')] },

@@ -1,6 +1,21 @@
-type EvolutionSendTextPayload = {
-	number: string
-	text: string
+import { getWhatsAppLogoImage } from './branding'
+
+type ZApiSendTextPayload = {
+	phone: string
+	message: string
+}
+
+type ZApiSendImagePayload = {
+	phone: string
+	image: string
+	caption: string
+	viewOnce: boolean
+}
+
+type ZApiConfig = {
+	instanceId: string
+	token: string
+	clientToken: string
 }
 
 type PatientCredentialsMessageParams = {
@@ -21,14 +36,14 @@ export async function sendPatientCredentialsWhatsApp(params: {
 	whatsapp?: string | null
 	message: string
 }): Promise<void> {
-	await sendWhatsAppText(params.whatsapp, params.message)
+	await sendWhatsAppMessage(params)
 }
 
 export async function sendNewExamWhatsApp(params: {
 	whatsapp?: string | null
 	message: string
 }): Promise<void> {
-	await sendWhatsAppText(params.whatsapp, params.message)
+	await sendWhatsAppMessage(params)
 }
 
 export function buildPatientCredentialsMessage({
@@ -52,7 +67,6 @@ export function buildPatientCredentialsMessage({
 		'4. Digite a senha indicada acima.',
 		'5. Clique em "Entrar" para visualizar seus exames.',
 		'',
-		'Guarde este documento em local seguro.',
 		'Em caso de duvidas, entre em contato com a clinica.',
 	].join('\n')
 }
@@ -77,59 +91,98 @@ export function buildNewExamMessage({
 	].join('\n')
 }
 
+async function sendWhatsAppMessage(params: {
+	whatsapp?: string | null
+	message: string
+}): Promise<void> {
+	const logo = getWhatsAppLogoImage()
+
+	if (logo) {
+		await sendWhatsAppImage(params.whatsapp, logo, params.message)
+		return
+	}
+
+	await sendWhatsAppText(params.whatsapp, params.message)
+}
+
 async function sendWhatsAppText(
 	whatsapp: string | null | undefined,
 	text: string,
 ): Promise<void> {
-	const config = getEvolutionConfig()
-	const number = normalizeWhatsappNumber(whatsapp)
+	const config = getZApiConfig()
+	const phone = normalizeWhatsappNumber(whatsapp)
 
-	if (!number || !config) return
+	if (!phone || !config) return
 
-	const response = await fetch(
-		`${config.apiUrl}/message/sendText/${config.instanceName}`,
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				apikey: config.apiKey,
-			},
-			body: JSON.stringify({
-				number,
-				text,
-			} satisfies EvolutionSendTextPayload),
+	await zApiRequest(config, 'send-text', {
+		phone,
+		message: text,
+	} satisfies ZApiSendTextPayload)
+}
+
+async function sendWhatsAppImage(
+	whatsapp: string | null | undefined,
+	image: string,
+	caption: string,
+): Promise<void> {
+	const config = getZApiConfig()
+	const phone = normalizeWhatsappNumber(whatsapp)
+
+	if (!phone || !config) return
+
+	await zApiRequest(config, 'send-image', {
+		phone,
+		image,
+		caption,
+		viewOnce: false,
+	} satisfies ZApiSendImagePayload)
+}
+
+async function zApiRequest(
+	config: ZApiConfig,
+	endpoint: string,
+	body: unknown,
+): Promise<void> {
+	const response = await fetch(buildZApiUrl(config, endpoint), {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'Client-Token': config.clientToken,
 		},
-	)
+		body: JSON.stringify(body),
+	})
 
 	if (!response.ok) {
 		const details = await response.text().catch(() => '')
 		throw new Error(
-			`Evolution API failed with status ${response.status}${
+			`Z-API failed with status ${response.status}${
 				details ? `: ${details}` : ''
 			}`,
 		)
 	}
 }
 
-function getEvolutionConfig() {
-	const apiUrl = process.env.EVOLUTION_API_URL?.trim().replace(/\/+$/, '')
-	const apiKey = process.env.EVOLUTION_API_KEY?.trim()
-	const instanceName = process.env.EVOLUTION_INSTANCE_NAME?.trim()
+function buildZApiUrl(config: ZApiConfig, endpoint: string): string {
+	return `https://api.z-api.io/instances/${config.instanceId}/token/${config.token}/${endpoint}`
+}
 
-	if (!apiUrl || !apiKey || !instanceName) return null
+function getZApiConfig(): ZApiConfig | null {
+	const instanceId = process.env.ZAPI_INSTANCE_ID?.trim()
+	const token = process.env.ZAPI_INSTANCE_TOKEN?.trim()
+	const clientToken = process.env.ZAPI_CLIENT_TOKEN?.trim()
 
-	return { apiUrl, apiKey, instanceName }
+	if (!instanceId || !token || !clientToken) return null
+
+	return { instanceId, token, clientToken }
 }
 
 function normalizeWhatsappNumber(value: string | null | undefined): string | null {
 	const digits = value?.replace(/\D/g, '')
 	if (!digits) return null
 
-	const defaultCountryCode =
-		process.env.EVOLUTION_DEFAULT_COUNTRY_CODE?.replace(/\D/g, '') ?? '55'
+	const defaultCountryCode = '55'
 
 	if (
-		defaultCountryCode &&
 		(digits.length === 10 || digits.length === 11) &&
 		!digits.startsWith(defaultCountryCode)
 	) {

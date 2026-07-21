@@ -5,7 +5,6 @@ import {
 } from '../../shared/hooks/authenticate'
 import {
 	createAdminController,
-	deleteAdminController,
 	getAdminController,
 	listAdminsController,
 	updateAdminController,
@@ -21,10 +20,5 @@ export async function adminRoutes(app: FastifyInstance) {
 		'/:id',
 		{ onRequest: [requireSuperAdmin] },
 		updateAdminController,
-	)
-	app.delete<{ Params: { id: string } }>(
-		'/:id',
-		{ onRequest: [requireSuperAdmin] },
-		deleteAdminController,
 	)
 }

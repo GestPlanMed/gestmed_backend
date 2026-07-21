@@ -1,14 +1,14 @@
 import { z } from 'zod'
 
 export const adminLoginSchema = z.object({
-	email: z.string().email('E-mail invalido'),
+	email: z.string().trim().toLowerCase().email('E-mail invalido'),
 	password: z.string().min(1, 'Senha obrigatoria'),
 })
 
 export type AdminLoginInput = z.infer<typeof adminLoginSchema>
 
 export const adminForgotPasswordSchema = z.object({
-	email: z.string().email('E-mail invalido'),
+	email: z.string().trim().toLowerCase().email('E-mail invalido'),
 })
 
 export const adminResetPasswordSchema = z.object({

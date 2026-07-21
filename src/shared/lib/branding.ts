@@ -7,16 +7,20 @@ const publicDirCandidates = [
 	path.resolve(__dirname, '../../../../public'),
 ]
 const LOGO_FILES = {
-	gestmed: {
+	amparo: {
 		pdf: { filename: 'logo.png', mimeType: 'image/png' },
-		email: { filename: 'logo_email.png', mimeType: 'image/png' },
-	},
-	hamilton: {
-		pdf: { filename: 'logo_ham.png', mimeType: 'image/png' },
-		email: { filename: 'logo_ham_email.png', mimeType: 'image/png' },
-		web: { filename: 'logo_ham.webp', mimeType: 'image/webp' },
+		email: {
+			filename: 'logo_email.png',
+			alternatives: ['logo_ham_email.png'],
+			mimeType: 'image/png',
+		},
 	},
 } as const
+
+const AMPARO_EMAIL_LOGO_FILENAMES = [
+	LOGO_FILES.amparo.email.filename,
+	...LOGO_FILES.amparo.email.alternatives,
+] as const
 
 function resolveOptionalAssetPath(...filenames: string[]): string | null {
 	for (const publicDir of publicDirCandidates) {
@@ -40,6 +44,9 @@ function getEmailAssetsBaseUrl(): string | null {
 	const candidates = [
 		process.env.EMAIL_ASSETS_BASE_URL,
 		process.env.API_PUBLIC_URL,
+		process.env.TRAEFIK_HOST
+			? `https://${process.env.TRAEFIK_HOST.trim()}`
+			: undefined,
 	]
 
 	for (const value of candidates) {
@@ -64,13 +71,9 @@ function getEmailAssetsBaseUrl(): string | null {
 
 export function getPdfLogos() {
 	return {
-		gestmed: readOptionalPublicAsset(
-			LOGO_FILES.gestmed.pdf.filename,
-			LOGO_FILES.gestmed.email.filename,
-		),
-		hamilton: readOptionalPublicAsset(
-			LOGO_FILES.hamilton.pdf.filename,
-			LOGO_FILES.hamilton.email.filename,
+		amparo: readOptionalPublicAsset(
+			LOGO_FILES.amparo.pdf.filename,
+			LOGO_FILES.amparo.email.filename,
 		),
 	}
 }
@@ -81,42 +84,40 @@ export function getOptionalPdfLogos() {
 
 export function getEmailLogos() {
 	const baseUrl = getEmailAssetsBaseUrl()
-	const gestmedPath = resolveOptionalAssetPath(LOGO_FILES.gestmed.email.filename)
-	const hamiltonPath = resolveOptionalAssetPath(LOGO_FILES.hamilton.email.filename)
+	const amparoPath = resolveOptionalAssetPath(...AMPARO_EMAIL_LOGO_FILENAMES)
 
 	return {
-		gestmed:
-			baseUrl && gestmedPath
-				? `${baseUrl}/public-assets/${LOGO_FILES.gestmed.email.filename}`
-				: null,
-		hamilton:
-			baseUrl && hamiltonPath
-				? `${baseUrl}/public-assets/${LOGO_FILES.hamilton.email.filename}`
+		amparo:
+			baseUrl && amparoPath
+				? `${baseUrl}/public-assets/${LOGO_FILES.amparo.email.filename}`
 				: null,
 	}
 }
 
+export function getWhatsAppLogoImage(): string | null {
+	const logoUrl = getEmailLogos().amparo
+	if (logoUrl) return logoUrl
+
+	const logoContent = readOptionalPublicAsset(...AMPARO_EMAIL_LOGO_FILENAMES)
+	if (!logoContent) return null
+
+	return `data:${LOGO_FILES.amparo.email.mimeType};base64,${logoContent.toString('base64')}`
+}
+
 export function getEmailLogoAttachments() {
-	const gestmed = readOptionalPublicAsset(LOGO_FILES.gestmed.email.filename)
-	const hamilton = readOptionalPublicAsset(LOGO_FILES.hamilton.email.filename)
+	const amparoPath = resolveOptionalAssetPath(...AMPARO_EMAIL_LOGO_FILENAMES)
+	const amparo = readOptionalPublicAsset(...AMPARO_EMAIL_LOGO_FILENAMES)
 
 	return {
-		gestmed: gestmed
-			? {
-					filename: LOGO_FILES.gestmed.email.filename,
-					contentType: LOGO_FILES.gestmed.email.mimeType,
-					content: gestmed.toString('base64'),
-					contentId: 'gestmed-logo',
-				}
-			: null,
-		hamilton: hamilton
-			? {
-					filename: LOGO_FILES.hamilton.email.filename,
-					contentType: LOGO_FILES.hamilton.email.mimeType,
-					content: hamilton.toString('base64'),
-					contentId: 'hamilton-logo',
-				}
-			: null,
+		amparo:
+			amparo && amparoPath
+				? {
+						filename: path.basename(amparoPath),
+						contentType: LOGO_FILES.amparo.email.mimeType,
+						content: amparo.toString('base64'),
+						contentId: 'amparo-logo',
+					}
+				: null,
 	}
 }
 
@@ -126,34 +127,15 @@ export function getPublicAssets() {
 	addPublicAsset(
 		assets,
 		'logo.png',
-		LOGO_FILES.gestmed.pdf.mimeType,
-		LOGO_FILES.gestmed.pdf.filename,
-		LOGO_FILES.gestmed.email.filename,
-	)
-	addPublicAsset(
-		assets,
-		'logo_ham.png',
-		LOGO_FILES.hamilton.pdf.mimeType,
-		LOGO_FILES.hamilton.pdf.filename,
-		LOGO_FILES.hamilton.email.filename,
+		LOGO_FILES.amparo.pdf.mimeType,
+		LOGO_FILES.amparo.pdf.filename,
+		LOGO_FILES.amparo.email.filename,
 	)
 	addPublicAsset(
 		assets,
 		'logo_email.png',
-		LOGO_FILES.gestmed.email.mimeType,
-		LOGO_FILES.gestmed.email.filename,
-	)
-	addPublicAsset(
-		assets,
-		'logo_ham_email.png',
-		LOGO_FILES.hamilton.email.mimeType,
-		LOGO_FILES.hamilton.email.filename,
-	)
-	addPublicAsset(
-		assets,
-		'logo_ham.webp',
-		LOGO_FILES.hamilton.web.mimeType,
-		LOGO_FILES.hamilton.web.filename,
+		LOGO_FILES.amparo.email.mimeType,
+		...AMPARO_EMAIL_LOGO_FILENAMES,
 	)
 
 	return assets

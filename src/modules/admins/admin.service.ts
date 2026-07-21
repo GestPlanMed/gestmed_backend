@@ -60,10 +60,7 @@ export async function createAdmin(data: CreateAdminInput) {
 
 		await sendAdminWelcomeEmail(admin.email, admin.name, rawPassword)
 
-		return {
-			admin: withScreens(admin),
-			rawPassword,
-		}
+		return withScreens(admin)
 	} catch (error) {
 		handleUniqueError(error)
 	}
@@ -121,21 +118,3 @@ export async function updateAdmin(id: string, data: UpdateAdminInput) {
 	}
 }
 
-export async function deleteAdmin(id: string, actorAdminId: string) {
-	if (id === actorAdminId) {
-		throw new AppError('Nao e permitido excluir o proprio usuario', 400)
-	}
-
-	const admin = await prisma.admin.findUnique({
-		where: { id },
-		select: buildAdminSelect(),
-	})
-
-	if (!admin) {
-		throw new AppError('Administrador nao encontrado', 404)
-	}
-
-	await prisma.admin.delete({ where: { id } })
-
-	return withScreens(admin)
-}

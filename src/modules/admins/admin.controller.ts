@@ -14,10 +14,10 @@ export async function createAdminController(
 		request,
 		action: 'create_admin',
 		payload: {
-			adminId: createdAdmin.admin.id,
-			name: createdAdmin.admin.name,
-			email: createdAdmin.admin.email,
-			profile: createdAdmin.admin.profile,
+			adminId: createdAdmin.id,
+			name: createdAdmin.name,
+			email: createdAdmin.email,
+			profile: createdAdmin.profile,
 		},
 	})
 
@@ -64,24 +64,3 @@ export async function updateAdminController(
 	return reply.status(200).send(admin)
 }
 
-export async function deleteAdminController(
-	request: FastifyRequest<{ Params: { id: string } }>,
-	reply: FastifyReply,
-) {
-	const admin = await service.deleteAdmin(request.params.id, request.user.sub)
-
-	await logUserAction({
-		request,
-		action: 'delete_admin',
-		payload: {
-			adminId: admin.id,
-			email: admin.email,
-			profile: admin.profile,
-		},
-	})
-
-	return reply.status(200).send({
-		message: 'Administrador excluido com sucesso',
-		admin,
-	})
-}

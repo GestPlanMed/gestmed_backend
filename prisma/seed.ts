@@ -38,6 +38,34 @@ async function main() {
 	})
 
 	console.log(`Admin criado: ${name} (${email}) com perfil ${profile}`)
+
+	const patientName = process.env.PATIENT_NAME ?? 'Paciente Teste'
+	const patientCpf = process.env.PATIENT_CPF ?? '52998224725'
+	const patientPassword = process.env.PATIENT_PASSWORD ?? 'TEST1234'
+	const patientBirthDate = process.env.PATIENT_BIRTH_DATE ?? '1990-01-15'
+	const patientWhatsapp = process.env.PATIENT_WHATSAPP
+
+	const patientPasswordHash = await bcrypt.hash(patientPassword, 10)
+
+	await prisma.patient.upsert({
+		where: { cpf: patientCpf },
+		update: {
+			name: patientName,
+			password: patientPasswordHash,
+			birthDate: new Date(patientBirthDate),
+			whatsapp: patientWhatsapp,
+		},
+		create: {
+			name: patientName,
+			cpf: patientCpf,
+			password: patientPasswordHash,
+			birthDate: new Date(patientBirthDate),
+			whatsapp: patientWhatsapp,
+		},
+	})
+
+	console.log(`Paciente criado: ${patientName} (CPF ${patientCpf})`)
+	console.log(`Senha do paciente: ${patientPassword}`)
 }
 
 main()

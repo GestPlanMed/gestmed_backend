@@ -91,7 +91,7 @@ export async function uploadExamController(
 	}
 
 	const data = createExamSchema.parse(fields)
-	const exams = await service.uploadExams(
+	const exam = await service.uploadExam(
 		data,
 		files.map((file) => ({
 			buffer: file.buffer,
@@ -102,10 +102,10 @@ export async function uploadExamController(
 	await logUserAction({
 		request,
 		action: 'upload_exam',
-		payload: { ...data, fileCount: files.length },
+		payload: { ...data, fileCount: files.length, examId: exam.id },
 	})
 
-	return reply.status(201).send(exams)
+	return reply.status(201).send(exam)
 }
 
 export async function listExamsController(
@@ -131,11 +131,33 @@ export async function downloadExamController(
 ) {
 	const { sub, role } = request.user
 	const patientId = role === 'patient' ? sub : undefined
-	const result = await service.getExamDownloadUrl(request.params.id, patientId)
+	const result = await service.getExamDownloadUrls(request.params.id, patientId)
 	await logUserAction({
 		request,
 		action: 'download_exam',
 		payload: { examId: request.params.id },
+	})
+	return reply.status(200).send(result)
+}
+
+export async function downloadExamItemController(
+	request: FastifyRequest<{ Params: { examId: string; itemId: string } }>,
+	reply: FastifyReply,
+) {
+	const { sub, role } = request.user
+	const patientId = role === 'patient' ? sub : undefined
+	const result = await service.getExamItemDownloadUrl(
+		request.params.examId,
+		request.params.itemId,
+		patientId,
+	)
+	await logUserAction({
+		request,
+		action: 'download_exam',
+		payload: {
+			examId: request.params.examId,
+			itemId: request.params.itemId,
+		},
 	})
 	return reply.status(200).send(result)
 }

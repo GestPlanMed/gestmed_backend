@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
-import { loginPatientController } from './patient-auth.controller'
+import { requirePatient } from '../../../shared/hooks/authenticate'
+import { getPatientMeController, loginPatientController } from './patient-auth.controller'
 
 export async function patientAuthRoutes(app: FastifyInstance) {
 	app.post(
@@ -9,4 +10,6 @@ export async function patientAuthRoutes(app: FastifyInstance) {
 		},
 		loginPatientController,
 	)
+
+	app.get('/me', { onRequest: [requirePatient] }, getPatientMeController)
 }

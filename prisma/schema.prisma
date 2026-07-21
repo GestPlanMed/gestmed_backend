@@ -38,15 +38,25 @@ model Patient {
 }
 
 model Exam {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   patientId String
-  patient   Patient  @relation(fields: [patientId], references: [id])
+  patient   Patient    @relation(fields: [patientId], references: [id])
   examDate  DateTime
   examType  String
+  createdAt DateTime   @default(now())
+  items     ExamItem[]
+
+  @@index([patientId])
+}
+
+model ExamItem {
+  id        String   @id @default(cuid())
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   fileKey   String
   createdAt DateTime @default(now())
 
-  @@index([patientId])
+  @@index([examId])
 }
 
 model UserActionLog {

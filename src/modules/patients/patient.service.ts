@@ -39,8 +39,7 @@ async function generatePatientCredentialsPDF(patient: {
 	}
 
 	const pdfBuffer = await generateCredentialsPDF(credentials)
-	// WhatsApp em standby: reativar quando a Evolution API estiver pronta.
-	// await notifyPatientCredentials(patient.whatsapp, generateCredentialsText(credentials))
+	await notifyPatientCredentials(patient.whatsapp, generateCredentialsText(credentials))
 
 	return pdfBuffer
 }
@@ -87,8 +86,7 @@ export async function createPatient(data: CreatePatientInput): Promise<Buffer> {
 		throw error
 	}
 
-	// WhatsApp em standby: reativar quando a Evolution API estiver pronta.
-	// await notifyPatientCredentials(data.whatsapp, generateCredentialsText(credentials))
+	await notifyPatientCredentials(data.whatsapp, generateCredentialsText(credentials))
 
 	return pdfBuffer
 }
