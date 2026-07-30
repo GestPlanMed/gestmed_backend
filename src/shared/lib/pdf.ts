@@ -23,7 +23,7 @@ export function generateCredentialsPDF(
 		doc.on('error', reject)
 
 		const topY = doc.y
-		const logoWidth = 80
+		const logoWidth = 60
 
 		if (logos.amparo) {
 			doc.image(logos.amparo, (doc.page.width - logoWidth) / 2, topY, {
@@ -70,7 +70,7 @@ export function generateCredentialsPDF(
 			.moveDown(0.4)
 			.fontSize(11)
 			.font('Helvetica-Bold')
-			.fillColor('#747474ff')
+			.fillColor('#111111')
 			.text('Atenção: sua senha é de uso pessoal e intransferível.')
 			.font('Helvetica')
 			.fillColor('#111111')
