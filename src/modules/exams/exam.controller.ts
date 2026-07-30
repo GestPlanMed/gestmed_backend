@@ -132,11 +132,6 @@ export async function downloadExamController(
 	const { sub, role } = request.user
 	const patientId = role === 'patient' ? sub : undefined
 	const result = await service.getExamDownloadUrls(request.params.id, patientId)
-	await logUserAction({
-		request,
-		action: 'download_exam',
-		payload: { examId: request.params.id },
-	})
 	return reply.status(200).send(result)
 }
 
@@ -151,14 +146,6 @@ export async function downloadExamItemController(
 		request.params.itemId,
 		patientId,
 	)
-	await logUserAction({
-		request,
-		action: 'download_exam',
-		payload: {
-			examId: request.params.examId,
-			itemId: request.params.itemId,
-		},
-	})
 	return reply.status(200).send(result)
 }
 
@@ -171,6 +158,33 @@ export async function deleteExamController(
 		request,
 		action: 'delete_exam',
 		payload: { examId: request.params.id },
+	})
+	return reply.status(204).send()
+}
+
+export async function logDownloadExamController(
+	request: FastifyRequest<{ Params: { id: string } }>,
+	reply: FastifyReply,
+) {
+	await logUserAction({
+		request,
+		action: 'download_exam',
+		payload: { examId: request.params.id },
+	})
+	return reply.status(204).send()
+}
+
+export async function logDownloadExamItemController(
+	request: FastifyRequest<{ Params: { examId: string; itemId: string } }>,
+	reply: FastifyReply,
+) {
+	await logUserAction({
+		request,
+		action: 'download_exam',
+		payload: {
+			examId: request.params.examId,
+			itemId: request.params.itemId,
+		},
 	})
 	return reply.status(204).send()
 }

@@ -48,11 +48,12 @@ export async function regeneratePatientCredentialsController(
 	reply: FastifyReply,
 ) {
 	const pdfBuffer = await service.regeneratePatientCredentials(request.params.id)
-	const filename = await service.getPatientCredentialsFilename(request.params.id)
+	const patient = await service.getPatient(request.params.id)
+	const filename = service.buildPatientCredentialsFilename(patient.name)
 	await logUserAction({
 		request,
 		action: 'regenerate_patient_credentials',
-		payload: { patientId: request.params.id },
+		payload: { patientId: request.params.id, patientName: patient.name },
 	})
 
 	return reply

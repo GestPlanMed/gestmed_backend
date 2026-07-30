@@ -15,6 +15,8 @@ export async function loginPatientController(
 		payload: { cpf },
 	})
 
+	request.log.info({ patientId: patient.id, action: 'login_patient' }, 'Verificação de acesso: Paciente realizou login com sucesso')
+
 	const token = await reply.jwtSign({ sub: patient.id, role: 'patient' })
 	return reply.status(200).send({
 		token,

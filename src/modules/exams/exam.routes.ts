@@ -12,6 +12,8 @@ import {
 	downloadExamController,
 	downloadExamItemController,
 	deleteExamController,
+	logDownloadExamController,
+	logDownloadExamItemController,
 } from './exam.controller'
 
 export async function examRoutes(app: FastifyInstance) {
@@ -35,5 +37,17 @@ export async function examRoutes(app: FastifyInstance) {
 		'/:id/download',
 		{ onRequest: [authenticate, requireAdminScreenIfAdmin('exams')] },
 		downloadExamController,
+	)
+
+	app.post<{ Params: { id: string } }>(
+		'/:id/log-download',
+		{ onRequest: [authenticate, requireAdminScreenIfAdmin('exams')] },
+		logDownloadExamController,
+	)
+
+	app.post<{ Params: { examId: string; itemId: string } }>(
+		'/:examId/items/:itemId/log-download',
+		{ onRequest: [authenticate, requireAdminScreenIfAdmin('exams')] },
+		logDownloadExamItemController,
 	)
 }

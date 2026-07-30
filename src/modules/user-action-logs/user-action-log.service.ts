@@ -79,71 +79,78 @@ function buildUserActionLogPresentation(
 ) {
 	const payloadRecord = isRecord(payload) ? payload : null
 
+	const formatObject = (obj: any) => {
+		if (!obj) return ''
+		return Object.entries(obj)
+			.map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}`)
+			.join(', ')
+	}
+
 	switch (action) {
 		case 'login_admin':
 			return {
 				resource: 'admin',
-				detail: stringifyDetail(payloadRecord?.email),
+				details: 'Acessou a plataforma!',
 			}
 		case 'login_patient':
 			return {
 				resource: 'patient',
-				detail: stringifyDetail(payloadRecord?.cpf),
+				details: 'Acessou a plataforma!',
 			}
 		case 'create_patient':
 			return {
 				resource: 'patient',
-				detail: stringifyDetail(payloadRecord?.name),
+				details: payloadRecord?.name ? `Novo paciente: ${payloadRecord.name} (CPF: ${payloadRecord.cpf || 'N/A'})` : stringifyDetail(payload),
 			}
 		case 'create_admin':
 			return {
 				resource: 'admin',
-				detail: stringifyDetail(payloadRecord?.email ?? payloadRecord?.name),
+				details: payloadRecord?.email ? `Novo admin: ${payloadRecord.email} - Perfil: ${payloadRecord.profile || 'N/A'}` : stringifyDetail(payload),
 			}
 		case 'update_admin':
 			return {
 				resource: 'admin',
-				detail: stringifyDetail(payloadRecord?.adminId),
+				details: `Admin ID: ${payloadRecord?.adminId}. Alterações: ${payloadRecord?.changes ? formatObject(payloadRecord.changes) : stringifyDetail(payload)}`,
 			}
 		case 'delete_admin':
 			return {
 				resource: 'admin',
-				detail: stringifyDetail(payloadRecord?.adminId),
+				details: payloadRecord?.adminId ? `Excluído admin ID: ${payloadRecord.adminId}` : stringifyDetail(payload),
 			}
 		case 'update_patient':
 			return {
 				resource: 'patient',
-				detail: stringifyDetail(payloadRecord?.patientId),
+				details: `Paciente ID: ${payloadRecord?.patientId}. Alterações: ${payloadRecord?.changes ? formatObject(payloadRecord.changes) : stringifyDetail(payload)}`,
 			}
 		case 'delete_patient':
 			return {
 				resource: 'patient',
-				detail: stringifyDetail(payloadRecord?.patientId),
+				details: payloadRecord?.patientId ? `Excluído paciente ID: ${payloadRecord.patientId}` : stringifyDetail(payload),
 			}
 		case 'regenerate_patient_credentials':
 			return {
 				resource: 'patient_credentials',
-				detail: stringifyDetail(payloadRecord?.patientId),
+				details: payloadRecord?.patientName ? `Credenciais geradas para paciente: ${payloadRecord.patientName}` : (payloadRecord?.patientId ? `Credenciais geradas para paciente ID: ${payloadRecord.patientId}` : stringifyDetail(payload)),
 			}
 		case 'upload_exam':
 			return {
 				resource: 'exam',
-				detail: stringifyDetail(
-					isRecord(payloadRecord)
-						? payloadRecord.examType ?? payloadRecord.patientId
-						: null,
-				),
+				details: `Paciente ID: ${payloadRecord?.patientId}. Tipo: ${payloadRecord?.examType || 'N/A'}`,
 			}
 		case 'download_exam':
+			return {
+				resource: 'exam',
+				details: payloadRecord?.examId ? `Download do exame ID: ${payloadRecord.examId}` : stringifyDetail(payload),
+			}
 		case 'delete_exam':
 			return {
 				resource: 'exam',
-				detail: stringifyDetail(payloadRecord?.examId),
+				details: payloadRecord?.examId ? `Excluído exame ID: ${payloadRecord.examId}` : stringifyDetail(payload),
 			}
 		default:
 			return {
 				resource: inferResourceFromAction(action),
-				detail: stringifyDetail(payload),
+				details: stringifyDetail(payload),
 			}
 	}
 }

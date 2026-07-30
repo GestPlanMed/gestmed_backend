@@ -12,6 +12,7 @@ import { examRoutes } from './modules/exams/exam.routes'
 import { userActionLogRoutes } from './modules/user-action-logs/user-action-log.routes'
 import { adminRoutes } from './modules/admins/admin.routes'
 import { userRoutes } from './modules/users/user.routes'
+import { examTypeRoutes } from './modules/exam-types/exam-type.routes'
 import { AppError } from './shared/errors/app-error'
 import { getPublicAssets } from './shared/lib/branding'
 
@@ -123,6 +124,7 @@ export function buildApp() {
 	app.register(patientAuthRoutes, { prefix: '/auth/patient' })
 	app.register(patientRoutes, { prefix: '/patients' })
 	app.register(examRoutes, { prefix: '/exams' })
+	app.register(examTypeRoutes, { prefix: '/exam-types' })
 	app.register(userActionLogRoutes, { prefix: '/user-action-logs' })
 	app.register(adminRoutes, { prefix: '/admins' })
 	app.register(userRoutes, { prefix: '/users' })

@@ -73,7 +73,7 @@ export function getPdfLogos() {
 	return {
 		amparo: readOptionalPublicAsset(
 			LOGO_FILES.amparo.pdf.filename,
-			LOGO_FILES.amparo.email.filename,
+			...AMPARO_EMAIL_LOGO_FILENAMES,
 		),
 	}
 }
